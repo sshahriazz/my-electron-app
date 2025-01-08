@@ -4,6 +4,7 @@ import { SettingsPanel } from "./components/SettingsPanel";
 import { TimeTracker } from "./components/TimeTracker";
 import { useScreenshots } from "./hooks/useScreenshots";
 import { useScreenshotSettings } from "./hooks/useScreenshotSettings";
+import { UserActivityTracker } from "./components/UserActivityTracker";
 
 const App: React.FC = () => {
   const [isTimerOn, setIsTimerOn] = useState(false);
@@ -42,10 +43,13 @@ const App: React.FC = () => {
       {error && (
         <div style={{ color: "red", marginTop: "10px" }}>Error: {error}</div>
       )}
-      <TimeTracker 
-        onTimerStateChange={setIsTimerOn} 
+      <TimeTracker
+        onTimerStateChange={setIsTimerOn}
         onTaskNameChange={setCurrentTaskName}
       />
+      <div style={{ marginTop: "20px" }}>
+        <UserActivityTracker isTimerOn={isTimerOn} />
+      </div>
       <div style={{ marginTop: "20px" }}>
         <h3>Screenshots:</h3>
         <SettingsPanel
