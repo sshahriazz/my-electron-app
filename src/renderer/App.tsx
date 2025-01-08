@@ -7,6 +7,7 @@ import {
 } from "react-router-dom";
 import Layout from "./components/Layout";
 import Home from "./pages/Home";
+import { ThemeProvider } from "./context/ThemeContext";
 
 const router = createHashRouter(
   createRoutesFromElements(
@@ -21,7 +22,11 @@ const router = createHashRouter(
 );
 
 const App: React.FC = () => {
-  return <RouterProvider router={router} />;
+  return (
+    <ThemeProvider>
+      <RouterProvider router={router} />
+    </ThemeProvider>
+  );
 };
 
 export default App;
