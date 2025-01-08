@@ -173,6 +173,20 @@ const cleanup = () => {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 app.whenReady().then(async () => {
+  // Set up CSP
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        'Content-Security-Policy': [
+          "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; " +
+          "img-src 'self' data: blob: file: media: https: http:; " +
+          "script-src 'self' 'unsafe-inline' 'unsafe-eval';"
+        ]
+      }
+    });
+  });
+
   // Install React DevTools first
   try {
     await installExtension(REACT_DEVELOPER_TOOLS);

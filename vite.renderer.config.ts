@@ -1,9 +1,18 @@
 import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
 
 // https://vitejs.dev/config
 export default defineConfig({
-  plugins: [],
+  plugins: [react()],
   resolve: {
-    extensions: ['.js', '.ts', '.jsx', '.tsx', '.json']
-  }
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
+  base: './',
+  build: {
+    outDir: '.vite/renderer',
+    emptyOutDir: true,
+  },
 });
