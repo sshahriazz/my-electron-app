@@ -117,28 +117,28 @@ const createWindow = async () => {
     width: 1200,
     height: 800,
     webPreferences: {
-      nodeIntegration: false,
+      nodeIntegration: true,
       contextIsolation: true,
-      sandbox: true,
+      sandbox: false,
       preload: path.join(__dirname, "preload.js"),
-      devTools: true,
-      webSecurity: true
+      webSecurity: true,
+      additionalArguments: ['--no-sandbox']
     },
   });
 
-  // Enable remote module and set session permissions
-  mainWindow.webContents.session.setPermissionRequestHandler((webContents, permission, callback) => {
-    callback(true);
-  });
+  // Enable DevTools in development
+  if (process.env.NODE_ENV === 'development') {
+    mainWindow.webContents.openDevTools();
+  }
 
-  // Set CSP headers with more permissive policy for development
+  // Set CSP headers
   mainWindow.webContents.session.webRequest.onHeadersReceived(
     (details, callback) => {
       callback({
         responseHeaders: {
           ...details.responseHeaders,
-          "Content-Security-Policy": [
-            "default-src 'self' 'unsafe-inline' 'unsafe-eval'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' media: data: blob:; media-src 'self' media:; connect-src 'self' ws: wss:",
+          'Content-Security-Policy': [
+            "default-src 'self' 'unsafe-inline' 'unsafe-eval'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';"
           ],
         },
       });
@@ -149,8 +149,6 @@ const createWindow = async () => {
   try {
     if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
       await mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
-      // Open DevTools immediately for development
-      mainWindow.webContents.openDevTools();
     } else {
       await mainWindow.loadFile(
         path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`)
@@ -194,7 +192,10 @@ app.whenReady().then(async () => {
     console.error("Failed to install React DevTools:", err);
   }
 
-  // Register protocol before creating window using the new protocol.handle API
+  // Register IPC handlers before creating window
+  registerIpcHandlers();
+
+  // Register protocol
   protocol.handle("media", (request) => {
     try {
       const filePath = decodeURIComponent(request.url.slice("media://".length));
@@ -213,8 +214,8 @@ app.whenReady().then(async () => {
     }
   });
 
+  // Create window after registering handlers
   await createWindow();
-  registerIpcHandlers();
 
   app.on("activate", async () => {
     if (BrowserWindow.getAllWindows().length === 0) {

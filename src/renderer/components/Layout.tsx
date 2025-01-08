@@ -7,7 +7,17 @@ const Layout: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors duration-200">
+    <div
+      className="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors duration-200"
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        overflow: "auto",
+      }}
+    >
       <nav className="bg-white dark:bg-gray-800 shadow-lg">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex justify-between h-16">

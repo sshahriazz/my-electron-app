@@ -10,9 +10,17 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
-  base: './',
+  base: process.env.IS_DEV !== 'true' ? './' : '/',
   build: {
     outDir: '.vite/renderer',
     emptyOutDir: true,
+    target: 'esnext',
+    minify: process.env.IS_DEV !== 'true',
+    sourcemap: process.env.IS_DEV === 'true',
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'index.html'),
+      },
+    },
   },
 });

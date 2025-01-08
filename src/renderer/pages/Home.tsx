@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { ScreenshotGrid } from "../../components/ScreenshotGrid";
-import { SettingsPanel } from "../../components/SettingsPanel";
-import { TimeTracker } from "../../components/TimeTracker";
+import { ScreenshotGrid } from "../components/ScreenshotGrid";
+import { SettingsPanel } from "../components/SettingsPanel";
+import { TimeTracker } from "../components/TimeTracker";
 import { useScreenshots } from "../hooks/useScreenshots";
 import { useScreenshotSettings } from "../hooks/useScreenshotSettings";
 
