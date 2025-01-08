@@ -13,8 +13,6 @@ export const ScreenshotGrid: React.FC<ScreenshotGridProps> = ({
   imageLoadErrors,
   onRetryLoad,
 }) => {
-  console.log("imageUrls:", imageUrls);
-
   return (
     <div
       style={{

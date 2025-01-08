@@ -37,7 +37,6 @@ const registerIpcHandlers = () => {
   ipcMain.handle("read-directory", () => {
     try {
       const files = fs.readdirSync(screenshotsDir);
-      console.log("Screenshots directory contents:", files);
       return { path: screenshotsDir, files };
     } catch (error) {
       console.error("Error reading directory:", error);
@@ -48,10 +47,8 @@ const registerIpcHandlers = () => {
   // Handle IPC for getting image URLs
   ipcMain.handle("get-image-url", (_, imagePath) => {
     try {
-      console.log("Getting URL for image:", imagePath);
       const fullPath = path.join(screenshotsDir, imagePath);
-      console.log("Full path:", fullPath);
-      
+
       // Verify the file exists before returning the URL
       if (!fs.existsSync(fullPath)) {
         console.error("Image file not found:", fullPath);
@@ -76,8 +73,6 @@ const registerIpcHandlers = () => {
       const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
       const filename = `${name}-${timestamp}.png`;
       const screenshotPath = path.join(screenshotsDir, filename);
-      console.log("Taking screenshot:", filename);
-      console.log("PATH", screenshotPath);
 
       if (sources.length > 0) {
         const source = sources[0];
@@ -89,7 +84,7 @@ const registerIpcHandlers = () => {
         }
 
         // Wait a moment to ensure file is fully written
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 100));
 
         return { success: true, path: screenshotPath, filename };
       }
@@ -122,22 +117,28 @@ const createWindow = async () => {
     width: 1200,
     height: 800,
     webPreferences: {
-      nodeIntegration: true,
+      nodeIntegration: false,
       contextIsolation: true,
-      sandbox: false,
+      sandbox: true,
       preload: path.join(__dirname, "preload.js"),
-      devTools: true, // Explicitly enable DevTools
+      devTools: true,
+      webSecurity: true
     },
   });
 
-  // Set CSP headers
+  // Enable remote module and set session permissions
+  mainWindow.webContents.session.setPermissionRequestHandler((webContents, permission, callback) => {
+    callback(true);
+  });
+
+  // Set CSP headers with more permissive policy for development
   mainWindow.webContents.session.webRequest.onHeadersReceived(
     (details, callback) => {
       callback({
         responseHeaders: {
           ...details.responseHeaders,
           "Content-Security-Policy": [
-            "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' media: data: blob:; media-src 'self' media:",
+            "default-src 'self' 'unsafe-inline' 'unsafe-eval'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' media: data: blob:; media-src 'self' media:; connect-src 'self' ws: wss:",
           ],
         },
       });
@@ -175,7 +176,6 @@ app.whenReady().then(async () => {
   // Install React DevTools first
   try {
     await installExtension(REACT_DEVELOPER_TOOLS);
-    console.log("React DevTools installed successfully");
   } catch (err) {
     console.error("Failed to install React DevTools:", err);
   }
@@ -185,8 +185,7 @@ app.whenReady().then(async () => {
     try {
       const filePath = decodeURIComponent(request.url.slice("media://".length));
       const absolutePath = path.join(screenshotsDir, filePath);
-      console.log("Serving media:", absolutePath);
-      
+
       if (!fs.existsSync(absolutePath)) {
         console.error("File not found:", absolutePath);
         return new Response("File not found", { status: 404 });
