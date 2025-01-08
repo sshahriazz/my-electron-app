@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, Outlet } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
-import { Moon, Sun } from 'lucide-react';
+import { Moon, Sun } from "lucide-react";
 
 const Layout: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
@@ -13,7 +13,9 @@ const Layout: React.FC = () => {
           <div className="flex justify-between h-16">
             <div className="flex">
               <Link to="/" className="flex items-center">
-                <span className="text-xl font-bold text-gray-900 dark:text-white">My Electron App</span>
+                <span className="text-xl font-bold text-gray-900 dark:text-white">
+                  My Electron App
+                </span>
               </Link>
             </div>
             <div className="flex items-center">
@@ -22,7 +24,7 @@ const Layout: React.FC = () => {
                 className="p-2 rounded-lg bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-200"
                 aria-label="Toggle theme"
               >
-                {theme === 'dark' ? (
+                {theme === "dark" ? (
                   <Sun className="h-5 w-5 text-gray-800 dark:text-yellow-200" />
                 ) : (
                   <Moon className="h-5 w-5 text-gray-800 dark:text-gray-200" />

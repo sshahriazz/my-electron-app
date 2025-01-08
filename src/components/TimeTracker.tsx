@@ -33,7 +33,9 @@ export const TimeTracker: React.FC<TimeTrackerProps> = ({
     }
   };
 
-  const handleNameChangeWithUpdate = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleNameChangeWithUpdate = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     handleNameChange(e);
     onTaskNameChange?.(e.target.value);
   };
