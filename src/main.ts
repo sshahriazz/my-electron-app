@@ -1,54 +1,221 @@
-import { app, BrowserWindow } from 'electron';
-import path from 'path';
-import started from 'electron-squirrel-startup';
+import {
+  app,
+  BrowserWindow,
+  ipcMain,
+  session,
+  desktopCapturer,
+  protocol,
+  net,
+} from "electron";
+import path from "path";
+import fs from "fs";
+import started from "electron-squirrel-startup";
+import installExtension, {
+  REACT_DEVELOPER_TOOLS,
+} from "electron-devtools-installer";
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
   app.quit();
 }
 
-const createWindow = () => {
+let mainWindow: BrowserWindow | null = null;
+
+// Ensure screenshots directory exists
+const screenshotsDir = path.join(app.getPath("userData"), "screenshots");
+if (!fs.existsSync(screenshotsDir)) {
+  fs.mkdirSync(screenshotsDir, { recursive: true });
+}
+
+// Register IPC handlers
+const registerIpcHandlers = () => {
+  if (ipcMain.listenerCount("read-directory") > 0) {
+    return; // Already registered
+  }
+
+  // Handle IPC for directory reading
+  ipcMain.handle("read-directory", () => {
+    try {
+      const files = fs.readdirSync(screenshotsDir);
+      console.log("Screenshots directory contents:", files);
+      return { path: screenshotsDir, files };
+    } catch (error) {
+      console.error("Error reading directory:", error);
+      return { path: "", files: [], error: error.message };
+    }
+  });
+
+  // Handle IPC for getting image URLs
+  ipcMain.handle("get-image-url", (_, imagePath) => {
+    try {
+      console.log("Getting URL for image:", imagePath);
+      const fullPath = path.join(screenshotsDir, imagePath);
+      console.log("Full path:", fullPath);
+      
+      // Verify the file exists before returning the URL
+      if (!fs.existsSync(fullPath)) {
+        console.error("Image file not found:", fullPath);
+        return "";
+      }
+
+      return `media://${imagePath}`;
+    } catch (error) {
+      console.error("Error getting image URL:", error);
+      return "";
+    }
+  });
+
+  // Handle IPC for taking screenshots
+  ipcMain.handle("take-screenshot", async (_, name) => {
+    try {
+      const sources = await desktopCapturer.getSources({
+        types: ["screen"],
+        thumbnailSize: { width: 1920, height: 1080 },
+      });
+
+      const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+      const filename = `${name}-${timestamp}.png`;
+      const screenshotPath = path.join(screenshotsDir, filename);
+      console.log("Taking screenshot:", filename);
+      console.log("PATH", screenshotPath);
+
+      if (sources.length > 0) {
+        const source = sources[0];
+        fs.writeFileSync(screenshotPath, source.thumbnail.toPNG());
+
+        // Verify file exists and is readable
+        if (!fs.existsSync(screenshotPath)) {
+          throw new Error("Failed to save screenshot");
+        }
+
+        // Wait a moment to ensure file is fully written
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        return { success: true, path: screenshotPath, filename };
+      }
+      return { success: false, error: "No screen source found" };
+    } catch (error) {
+      console.error("Error taking screenshot:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  // Handle IPC for deleting all screenshots
+  ipcMain.handle("delete-all-screenshots", () => {
+    try {
+      const files = fs.readdirSync(screenshotsDir);
+      for (const file of files) {
+        const filePath = path.join(screenshotsDir, file);
+        fs.unlinkSync(filePath);
+      }
+      return { success: true };
+    } catch (error) {
+      console.error("Error deleting screenshots:", error);
+      return { success: false, error: error.message };
+    }
+  });
+};
+
+const createWindow = async () => {
   // Create the browser window.
-  const mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
+  mainWindow = new BrowserWindow({
+    width: 1200,
+    height: 800,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      nodeIntegration: true,
+      contextIsolation: true,
+      sandbox: false,
+      preload: path.join(__dirname, "preload.js"),
+      devTools: true, // Explicitly enable DevTools
     },
   });
 
-  // and load the index.html of the app.
-  if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
-    mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
-  } else {
-    mainWindow.loadFile(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`));
-  }
+  // Set CSP headers
+  mainWindow.webContents.session.webRequest.onHeadersReceived(
+    (details, callback) => {
+      callback({
+        responseHeaders: {
+          ...details.responseHeaders,
+          "Content-Security-Policy": [
+            "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' media: data: blob:; media-src 'self' media:",
+          ],
+        },
+      });
+    }
+  );
 
-  // Open the DevTools.
-  mainWindow.webContents.openDevTools();
+  // Load the app
+  try {
+    if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
+      await mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
+      // Open DevTools immediately for development
+      mainWindow.webContents.openDevTools();
+    } else {
+      await mainWindow.loadFile(
+        path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`)
+      );
+    }
+  } catch (err) {
+    console.error("Failed to load the app:", err);
+  }
+};
+
+// Cleanup function
+const cleanup = () => {
+  // Remove all IPC handlers
+  ipcMain.removeHandler("read-directory");
+  ipcMain.removeHandler("get-image-url");
+  ipcMain.removeHandler("take-screenshot");
+  ipcMain.removeHandler("delete-all-screenshots");
 };
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
-app.on('ready', createWindow);
+app.whenReady().then(async () => {
+  // Install React DevTools first
+  try {
+    await installExtension(REACT_DEVELOPER_TOOLS);
+    console.log("React DevTools installed successfully");
+  } catch (err) {
+    console.error("Failed to install React DevTools:", err);
+  }
 
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
+  // Register protocol before creating window using the new protocol.handle API
+  protocol.handle("media", (request) => {
+    try {
+      const filePath = decodeURIComponent(request.url.slice("media://".length));
+      const absolutePath = path.join(screenshotsDir, filePath);
+      console.log("Serving media:", absolutePath);
+      
+      if (!fs.existsSync(absolutePath)) {
+        console.error("File not found:", absolutePath);
+        return new Response("File not found", { status: 404 });
+      }
+
+      const fileStream = fs.createReadStream(absolutePath);
+      return new Response(fileStream as any);
+    } catch (error) {
+      console.error("Error serving media:", error);
+      return new Response("Error serving media", { status: 500 });
+    }
+  });
+
+  await createWindow();
+  registerIpcHandlers();
+
+  app.on("activate", async () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+      await createWindow();
+    }
+  });
+});
+
+// Cleanup when app is quitting
+app.on("before-quit", cleanup);
+
+// Quit when all windows are closed, except on macOS.
+app.on("window-all-closed", () => {
+  if (process.platform !== "darwin") {
     app.quit();
   }
 });
-
-app.on('activate', () => {
-  // On OS X it's common to re-create a window in the app when the
-  // dock icon is clicked and there are no other windows open.
-  if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow();
-  }
-});
-
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and import them here.
