@@ -21,12 +21,10 @@ interface Window {
     }>;
     startTrackingKeyboardStroke: () => Promise<void>;
     stopTrackingKeyboardStroke: () => Promise<void>;
-    getKeyboardTrackingData: () => Promise<{
-      totalKeystrokes: number;
-      keyFrequencies: Record<string, number>;
-      startTime: number;
-      lastKeystrokeTime: number;
-    }>;
+    getKeyboardTrackingData: () => Promise<KeyStats>;
+    startTrackingInputStroke: () => Promise<void>;
+    stopTrackingInputStroke: () => Promise<void>;
+    getInputTrackingData: () => Promise<MouseStats>;
   };
 }
 

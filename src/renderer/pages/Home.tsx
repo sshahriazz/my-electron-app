@@ -4,6 +4,7 @@ import { SettingsPanel } from "../components/SettingsPanel";
 import { TimeTracker } from "../components/TimeTracker";
 import { useScreenshots } from "../hooks/useScreenshots";
 import { useScreenshotSettings } from "../hooks/useScreenshotSettings";
+import { KeyStats, MouseStats } from "keyboard-tracker";
 
 const Home: React.FC = () => {
   const [isTimerOn, setIsTimerOn] = useState(false);
@@ -36,12 +37,29 @@ const Home: React.FC = () => {
     loadFiles();
   }, [loadFiles]);
 
-  const [getKeyboardTrackingData, setKeyboardTrackingData] = useState({});
+  const [getKeyboardTrackingData, setKeyboardTrackingData] = useState<KeyStats>(
+    {
+      totalKeystrokes: 0,
+      keyFrequencies: {},
+      startTime: 0,
+      lastKeystrokeTime: 0,
+    }
+  );
+  const [getInputTrackingData, setInputTrackingData] = useState<MouseStats>({
+    totalClicks: 0,
+    mousePositions: [],
+    clickPositions: [],
+    buttonFrequencies: {},
+    lastClickTime: 0,
+    lastMoveTime: 0,
+  });
 
   return (
     <div className="p-5">
       <h1 className="text-3xl font-bold mb-4">Activity Monitor</h1>
-      {JSON.stringify(getKeyboardTrackingData, null, 2)}
+      KeyBoard: {JSON.stringify(getKeyboardTrackingData, null, 2)}
+      <br />
+      Input: {JSON.stringify(getInputTrackingData, null, 2)}
       <button
         className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
         onClick={() => window.electronAPI.startTrackingKeyboardStroke()}
@@ -64,6 +82,33 @@ const Home: React.FC = () => {
       <button
         className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
         onClick={() => window.electronAPI.stopTrackingKeyboardStroke()}
+        type="button"
+      >
+        Stop
+      </button>
+      <p>Mouse</p>
+      <button
+        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+        onClick={() => window.electronAPI.startTrackingInputStroke()}
+        type="button"
+      >
+        Start
+      </button>
+      <button
+        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+        onClick={async () => {
+          const data = await window.electronAPI.getInputTrackingData();
+          console.log(data);
+
+          setInputTrackingData(data);
+        }}
+        type="button"
+      >
+        Get Data
+      </button>
+      <button
+        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+        onClick={() => window.electronAPI.stopTrackingInputStroke()}
         type="button"
       >
         Stop

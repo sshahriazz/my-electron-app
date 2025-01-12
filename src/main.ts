@@ -15,9 +15,10 @@ import installExtension, {
 } from "electron-devtools-installer";
 
 // Import keyboard-tracker using require for better native module handling
-import * as keyboardTracker from "keyboard-tracker";
+import * as ActivityTracker from "keyboard-tracker";
 
-const keystrokeCounter = new keyboardTracker.KeystrokeCounter();
+const keystrokeCounter = new ActivityTracker.KeystrokeCounter();
+const mouseTracker = new ActivityTracker.InputTracker();
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
@@ -54,6 +55,24 @@ const registerIpcHandlers = () => {
   ipcMain.handle("get-keyboard-tracking-data", () => {
     const data = keystrokeCounter.getStats();
     console.log("Getting keyboard tracking data", data);
+    return data;
+  });
+
+  ipcMain.handle("start-tracking-input-stroke", () => {
+    console.log("Started tracking input strokes");
+
+    mouseTracker.startTracking();
+  });
+
+  ipcMain.handle("stop-tracking-input-stroke", () => {
+    console.log("Stopped tracking input strokes");
+
+    mouseTracker.stopTracking();
+  });
+
+  ipcMain.handle("get-input-tracking-data", () => {
+    const data = mouseTracker.getStats();
+    console.log("Getting input tracking data", data);
     return data;
   });
 

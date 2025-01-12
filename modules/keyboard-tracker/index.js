@@ -310,6 +310,7 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-const { KeystrokeCounter } = nativeBinding
+const { KeystrokeCounter, InputTracker } = nativeBinding
 
 module.exports.KeystrokeCounter = KeystrokeCounter
+module.exports.InputTracker = InputTracker

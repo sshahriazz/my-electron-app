@@ -2,6 +2,7 @@
 // https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
 
 import { contextBridge, ipcRenderer } from "electron";
+import { KeyStats, MouseStats } from "keyboard-tracker";
 
 export type ElectronAPI = {
   readDirectory: () => Promise<{
@@ -14,12 +15,10 @@ export type ElectronAPI = {
   deleteAllScreenshots: () => Promise<void>;
   startTrackingKeyboardStroke: () => Promise<void>;
   stopTrackingKeyboardStroke: () => Promise<void>;
-  getKeyboardTrackingData: () => Promise<{
-    totalKeystrokes: number;
-    keyFrequencies: Record<string, number>;
-    startTime: number;
-    lastKeystrokeTime: number;
-  }>;
+  getKeyboardTrackingData: () => Promise<KeyStats>;
+  startTrackingInputStroke: () => Promise<void>;
+  stopTrackingInputStroke: () => Promise<void>;
+  getInputTrackingData: () => Promise<MouseStats>;
 };
 
 const electronAPI: ElectronAPI = {
@@ -33,6 +32,11 @@ const electronAPI: ElectronAPI = {
     ipcRenderer.invoke("stop-tracking-keyboard-stroke"),
   getKeyboardTrackingData: () =>
     ipcRenderer.invoke("get-keyboard-tracking-data"),
+  startTrackingInputStroke: () =>
+    ipcRenderer.invoke("start-tracking-input-stroke"),
+  stopTrackingInputStroke: () =>
+    ipcRenderer.invoke("stop-tracking-input-stroke"),
+  getInputTrackingData: () => ipcRenderer.invoke("get-input-tracking-data"),
 };
 
 // Expose protected methods that allow the renderer process to use
