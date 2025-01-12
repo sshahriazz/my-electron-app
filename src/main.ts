@@ -157,74 +157,32 @@ const registerIpcHandlers = () => {
 const createWindow = async () => {
   // Create the browser window.
   mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
+    width: 1100,
+    height: 700,
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: true,
-      sandbox: false,
       preload: path.join(__dirname, "preload.js"),
       webSecurity: true,
-      additionalArguments: ["--no-sandbox"],
     },
   });
 
-  // Enable DevTools in development
-  if (
-    process.env.NODE_ENV === "development" ||
-    process.env.NODE_ENV === "production" ||
-    process.env.DEBUG_PROD === "true"
-  ) {
-    mainWindow.webContents.openDevTools();
-  }
+  // Set CSP in the main window
+  mainWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        "Content-Security-Policy": [
+          "default-src 'self' 'unsafe-inline' 'unsafe-eval'; img-src 'self' media: data: blob:",
+        ],
+      },
+    });
+  });
 
-  // Set CSP headers
-  mainWindow.webContents.session.webRequest.onHeadersReceived(
-    (details, callback) => {
-      callback({
-        responseHeaders: {
-          ...details.responseHeaders,
-          "Content-Security-Policy": [
-            "default-src 'self' 'unsafe-inline' 'unsafe-eval'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';",
-          ],
-        },
-      });
-    }
-  );
-
-  // Load the app
-  try {
-    if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
-      console.log("Loading dev server URL:", MAIN_WINDOW_VITE_DEV_SERVER_URL);
-      await mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
-    } else {
-      console.log(
-        "Loading production build from:",
-        path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`)
-      );
-      await mainWindow.loadFile(
-        path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`)
-      );
-    }
-
-    // Always open DevTools in development
-    if (
-      process.env.NODE_ENV === "development" ||
-      process.env.NODE_ENV === "development" ||
-      process.env.DEBUG_PROD === "true"
-    ) {
-      mainWindow.webContents.openDevTools();
-    }
-
-    // Log any load failures
-    mainWindow.webContents.on(
-      "did-fail-load",
-      (event, errorCode, errorDescription) => {
-        console.error("Failed to load:", errorCode, errorDescription);
-      }
-    );
-  } catch (err) {
-    console.error("Failed to load the app:", err);
+  if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
+    mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
+  } else {
+    mainWindow.loadFile(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`));
   }
 };
 
@@ -240,50 +198,41 @@ const cleanup = () => {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 app.whenReady().then(async () => {
-  // Set up CSP
+  // Register protocol before anything else
+  protocol.handle('media', (request) => {
+    const url = request.url.replace('media://', '');
+    try {
+      const filePath = path.join(screenshotsDir, decodeURIComponent(url));
+      if (!fs.existsSync(filePath)) {
+        console.error('File not found:', filePath);
+        return new Response('File not found', { status: 404 });
+      }
+      return net.fetch('file://' + filePath);
+    } catch (error) {
+      console.error('Protocol error:', error);
+      return new Response('Error serving media', { status: 500 });
+    }
+  });
+
+  // Set CSP headers for all sessions
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
     callback({
       responseHeaders: {
         ...details.responseHeaders,
-        "Content-Security-Policy": [
-          "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; " +
-            "img-src 'self' data: blob: file: media: https: http:; " +
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval';",
-        ],
-      },
+        'Content-Security-Policy': [
+          "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' media: data: blob:;"
+        ]
+      }
     });
   });
 
-  // Install React DevTools first
   try {
     await installExtension(REACT_DEVELOPER_TOOLS);
-  } catch (err) {
-    console.error("Failed to install React DevTools:", err);
+  } catch (e) {
+    console.error('Failed to install extension:', e);
   }
 
-  // Register IPC handlers before creating window
   registerIpcHandlers();
-
-  // Register protocol
-  protocol.handle("media", (request) => {
-    try {
-      const filePath = decodeURIComponent(request.url.slice("media://".length));
-      const absolutePath = path.join(screenshotsDir, filePath);
-
-      if (!fs.existsSync(absolutePath)) {
-        console.error("File not found:", absolutePath);
-        return new Response("File not found", { status: 404 });
-      }
-
-      const fileStream = fs.createReadStream(absolutePath);
-      return new Response(fileStream as any);
-    } catch (error) {
-      console.error("Error serving media:", error);
-      return new Response("Error serving media", { status: 500 });
-    }
-  });
-
-  // Create window after registering handlers
   await createWindow();
 
   app.on("activate", async () => {
