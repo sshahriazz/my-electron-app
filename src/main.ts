@@ -18,7 +18,7 @@ import installExtension, {
 import * as ActivityTracker from "keyboard-tracker";
 
 const keystrokeCounter = new ActivityTracker.KeystrokeCounter();
-const mouseTracker = new ActivityTracker.InputTracker();
+const mouseTracker = new ActivityTracker.MouseTracker();
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
@@ -178,21 +178,25 @@ const createWindow = async () => {
   });
 
   // Set CSP in the main window
-  mainWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
-    callback({
-      responseHeaders: {
-        ...details.responseHeaders,
-        "Content-Security-Policy": [
-          "default-src 'self' 'unsafe-inline' 'unsafe-eval'; img-src 'self' media: data: blob:",
-        ],
-      },
-    });
-  });
+  mainWindow.webContents.session.webRequest.onHeadersReceived(
+    (details, callback) => {
+      callback({
+        responseHeaders: {
+          ...details.responseHeaders,
+          "Content-Security-Policy": [
+            "default-src 'self' 'unsafe-inline' 'unsafe-eval'; img-src 'self' media: data: blob:",
+          ],
+        },
+      });
+    }
+  );
 
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
   } else {
-    mainWindow.loadFile(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`));
+    mainWindow.loadFile(
+      path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`)
+    );
   }
 };
 
@@ -209,18 +213,18 @@ const cleanup = () => {
 // initialization and is ready to create browser windows.
 app.whenReady().then(async () => {
   // Register protocol before anything else
-  protocol.handle('media', (request) => {
-    const url = request.url.replace('media://', '');
+  protocol.handle("media", (request) => {
+    const url = request.url.replace("media://", "");
     try {
       const filePath = path.join(screenshotsDir, decodeURIComponent(url));
       if (!fs.existsSync(filePath)) {
-        console.error('File not found:', filePath);
-        return new Response('File not found', { status: 404 });
+        console.error("File not found:", filePath);
+        return new Response("File not found", { status: 404 });
       }
-      return net.fetch('file://' + filePath);
+      return net.fetch("file://" + filePath);
     } catch (error) {
-      console.error('Protocol error:', error);
-      return new Response('Error serving media', { status: 500 });
+      console.error("Protocol error:", error);
+      return new Response("Error serving media", { status: 500 });
     }
   });
 
@@ -229,17 +233,17 @@ app.whenReady().then(async () => {
     callback({
       responseHeaders: {
         ...details.responseHeaders,
-        'Content-Security-Policy': [
-          "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' media: data: blob:;"
-        ]
-      }
+        "Content-Security-Policy": [
+          "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' media: data: blob:;",
+        ],
+      },
     });
   });
 
   try {
     await installExtension(REACT_DEVELOPER_TOOLS);
   } catch (e) {
-    console.error('Failed to install extension:', e);
+    console.error("Failed to install extension:", e);
   }
 
   registerIpcHandlers();

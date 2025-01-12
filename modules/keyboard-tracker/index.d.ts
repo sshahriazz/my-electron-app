@@ -21,10 +21,6 @@ export interface MouseStats {
   lastClickTime: number
   lastMoveTime: number
 }
-export interface CombinedStats {
-  keyStats: KeyStats
-  mouseStats: MouseStats
-}
 export declare class KeystrokeCounter {
   constructor()
   startTracking(): void
@@ -33,10 +29,10 @@ export declare class KeystrokeCounter {
   getStats(): KeyStats
   resetStats(): void
 }
-export declare class InputTracker {
+export declare class MouseTracker {
   constructor()
   startTracking(): void
   stopTracking(): void
-  getStats(): CombinedStats
+  getStats(): MouseStats
   resetStats(): void
 }
