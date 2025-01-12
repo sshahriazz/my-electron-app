@@ -58,6 +58,11 @@ const registerIpcHandlers = () => {
     return data;
   });
 
+  ipcMain.handle("reset-keyboard-tracking-data", () => {
+    console.log("Resetting keyboard tracking data");
+    keystrokeCounter.resetStats();
+  });
+
   ipcMain.handle("start-tracking-input-stroke", () => {
     console.log("Started tracking input strokes");
 
@@ -74,6 +79,11 @@ const registerIpcHandlers = () => {
     const data = mouseTracker.getStats();
     console.log("Getting input tracking data", data);
     return data;
+  });
+
+  ipcMain.handle("reset-input-tracking-data", () => {
+    console.log("Resetting input tracking data");
+    mouseTracker.resetStats();
   });
 
   // Handle IPC for directory reading

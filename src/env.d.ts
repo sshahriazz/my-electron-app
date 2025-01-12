@@ -22,9 +22,11 @@ interface Window {
     startTrackingKeyboardStroke: () => Promise<void>;
     stopTrackingKeyboardStroke: () => Promise<void>;
     getKeyboardTrackingData: () => Promise<KeyStats>;
+    resetKeyboardTrackingData: () => Promise<void>;
     startTrackingInputStroke: () => Promise<void>;
     stopTrackingInputStroke: () => Promise<void>;
     getInputTrackingData: () => Promise<MouseStats>;
+    resetInputTrackingData: () => Promise<void>;
   };
 }
 

@@ -16,9 +16,11 @@ export type ElectronAPI = {
   startTrackingKeyboardStroke: () => Promise<void>;
   stopTrackingKeyboardStroke: () => Promise<void>;
   getKeyboardTrackingData: () => Promise<KeyStats>;
+  resetKeyboardTrackingData: () => Promise<void>;
   startTrackingInputStroke: () => Promise<void>;
   stopTrackingInputStroke: () => Promise<void>;
   getInputTrackingData: () => Promise<MouseStats>;
+  resetInputTrackingData: () => Promise<void>;
 };
 
 const electronAPI: ElectronAPI = {
@@ -32,11 +34,15 @@ const electronAPI: ElectronAPI = {
     ipcRenderer.invoke("stop-tracking-keyboard-stroke"),
   getKeyboardTrackingData: () =>
     ipcRenderer.invoke("get-keyboard-tracking-data"),
+  resetKeyboardTrackingData: () =>
+    ipcRenderer.invoke("reset-keyboard-tracking-data"),
   startTrackingInputStroke: () =>
     ipcRenderer.invoke("start-tracking-input-stroke"),
   stopTrackingInputStroke: () =>
     ipcRenderer.invoke("stop-tracking-input-stroke"),
   getInputTrackingData: () => ipcRenderer.invoke("get-input-tracking-data"),
+  resetInputTrackingData: () =>
+    ipcRenderer.invoke("reset-input-tracking-data"),
 };
 
 // Expose protected methods that allow the renderer process to use
