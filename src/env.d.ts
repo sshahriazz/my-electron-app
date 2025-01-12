@@ -15,8 +15,17 @@ interface Window {
     }>;
     getImageUrl: (imagePath: string) => Promise<string>;
     deleteAllScreenshots: () => Promise<{
+      value: any;
       success: boolean;
       error?: string;
+    }>;
+    startTrackingKeyboardStroke: () => Promise<void>;
+    stopTrackingKeyboardStroke: () => Promise<void>;
+    getKeyboardTrackingData: () => Promise<{
+      totalKeystrokes: number;
+      keyFrequencies: Record<string, number>;
+      startTime: number;
+      lastKeystrokeTime: number;
     }>;
   };
 }

@@ -36,8 +36,38 @@ const Home: React.FC = () => {
     loadFiles();
   }, [loadFiles]);
 
+  const [getKeyboardTrackingData, setKeyboardTrackingData] = useState({});
+
   return (
     <div className="p-5">
+      <h1 className="text-3xl font-bold mb-4">Activity Monitor</h1>
+      {JSON.stringify(getKeyboardTrackingData, null, 2)}
+      <button
+        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+        onClick={() => window.electronAPI.startTrackingKeyboardStroke()}
+        type="button"
+      >
+        Start
+      </button>
+      <button
+        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+        onClick={async () => {
+          const data = await window.electronAPI.getKeyboardTrackingData();
+          console.log(data);
+
+          setKeyboardTrackingData(data);
+        }}
+        type="button"
+      >
+        Get Data
+      </button>
+      <button
+        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+        onClick={() => window.electronAPI.stopTrackingKeyboardStroke()}
+        type="button"
+      >
+        Stop
+      </button>
       <h2 className="text-xl font-semibold mb-4">
         Screenshots Directory: {currentPath}
       </h2>

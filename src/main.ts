@@ -14,6 +14,11 @@ import installExtension, {
   REACT_DEVELOPER_TOOLS,
 } from "electron-devtools-installer";
 
+// Import keyboard-tracker using require for better native module handling
+import * as keyboardTracker from "keyboard-tracker";
+
+const keystrokeCounter = new keyboardTracker.KeystrokeCounter();
+
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
   app.quit();
@@ -32,6 +37,25 @@ const registerIpcHandlers = () => {
   if (ipcMain.listenerCount("read-directory") > 0) {
     return; // Already registered
   }
+
+  // Handle IPC for Activity Monitor
+  ipcMain.handle("start-tracking-keyboard-stroke", () => {
+    console.log("Started tracking keyboard strokes");
+
+    keystrokeCounter.startTracking();
+  });
+
+  ipcMain.handle("stop-tracking-keyboard-stroke", () => {
+    console.log("Stopped tracking keyboard strokes");
+
+    keystrokeCounter.stopTracking();
+  });
+
+  ipcMain.handle("get-keyboard-tracking-data", () => {
+    const data = keystrokeCounter.getStats();
+    console.log("Getting keyboard tracking data", data);
+    return data;
+  });
 
   // Handle IPC for directory reading
   ipcMain.handle("read-directory", () => {
@@ -122,12 +146,16 @@ const createWindow = async () => {
       sandbox: false,
       preload: path.join(__dirname, "preload.js"),
       webSecurity: true,
-      additionalArguments: ['--no-sandbox']
+      additionalArguments: ["--no-sandbox"],
     },
   });
 
   // Enable DevTools in development
-  if (process.env.NODE_ENV === 'development') {
+  if (
+    process.env.NODE_ENV === "development" ||
+    process.env.NODE_ENV === "production" ||
+    process.env.DEBUG_PROD === "true"
+  ) {
     mainWindow.webContents.openDevTools();
   }
 
@@ -137,8 +165,8 @@ const createWindow = async () => {
       callback({
         responseHeaders: {
           ...details.responseHeaders,
-          'Content-Security-Policy': [
-            "default-src 'self' 'unsafe-inline' 'unsafe-eval'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';"
+          "Content-Security-Policy": [
+            "default-src 'self' 'unsafe-inline' 'unsafe-eval'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';",
           ],
         },
       });
@@ -148,12 +176,34 @@ const createWindow = async () => {
   // Load the app
   try {
     if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
+      console.log("Loading dev server URL:", MAIN_WINDOW_VITE_DEV_SERVER_URL);
       await mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
     } else {
+      console.log(
+        "Loading production build from:",
+        path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`)
+      );
       await mainWindow.loadFile(
         path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`)
       );
     }
+
+    // Always open DevTools in development
+    if (
+      process.env.NODE_ENV === "development" ||
+      process.env.NODE_ENV === "development" ||
+      process.env.DEBUG_PROD === "true"
+    ) {
+      mainWindow.webContents.openDevTools();
+    }
+
+    // Log any load failures
+    mainWindow.webContents.on(
+      "did-fail-load",
+      (event, errorCode, errorDescription) => {
+        console.error("Failed to load:", errorCode, errorDescription);
+      }
+    );
   } catch (err) {
     console.error("Failed to load the app:", err);
   }
@@ -176,12 +226,12 @@ app.whenReady().then(async () => {
     callback({
       responseHeaders: {
         ...details.responseHeaders,
-        'Content-Security-Policy': [
+        "Content-Security-Policy": [
           "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; " +
-          "img-src 'self' data: blob: file: media: https: http:; " +
-          "script-src 'self' 'unsafe-inline' 'unsafe-eval';"
-        ]
-      }
+            "img-src 'self' data: blob: file: media: https: http:; " +
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval';",
+        ],
+      },
     });
   });
 

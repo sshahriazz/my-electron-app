@@ -14,7 +14,11 @@ export default defineConfig({
     target: 'node18',
     sourcemap: 'inline',
     rollupOptions: {
-      external: ['electron'],
+      external: [
+        'electron',
+        'keyboard-tracker',
+        'keyboard-tracker-darwin-arm64'
+      ],
     },
   },
 });

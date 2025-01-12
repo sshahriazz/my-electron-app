@@ -11,11 +11,7 @@ import { ThemeProvider } from "./context/ThemeContext";
 
 const router = createHashRouter(
   createRoutesFromElements(
-    <Route
-      path="/"
-      element={<Layout />}
-      errorElement={<div>Error!</div>}
-    >
+    <Route path="/" element={<Layout />} errorElement={<div>Error!</div>}>
       <Route index element={<Home />} />
     </Route>
   )

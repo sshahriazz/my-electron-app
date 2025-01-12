@@ -1,7 +1,7 @@
 {
   "name": "my-electron-app",
   "productName": "my-electron-app",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "My Electron application description",
   "main": ".vite/build/main.js",
   "scripts": {
@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "electron-squirrel-startup": "^1.0.1",
+    "keyboard-tracker": "file:modules/keyboard-tracker",
     "lucide-react": "^0.469.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -62,5 +63,6 @@
     "name": "Polash",
     "email": "shahriazkobir1994@hotmail.com"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "packageManager": "yarn@4.6.0"
 }
