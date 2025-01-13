@@ -1,6 +1,7 @@
 import React from "react";
-import { useTimeTracker } from "../hooks/useTimeTracker";
+import { useActivityTracker } from "../hooks/useActivityTracker";
 import { useScreenshots } from "../hooks/useScreenshots";
+import { useTimeTracker } from "../hooks/useTimeTracker";
 
 interface TimeTrackerProps {
   onTimerStateChange?: (isRunning: boolean) => void;
@@ -26,7 +27,15 @@ export const TimeTracker: React.FC<TimeTrackerProps> = ({
 
   const { takeScreenshot } = useScreenshots();
 
+  const {
+    activityPercentage,
+    startTracking,
+    stopTracking
+  } = useActivityTracker();
+
   const handleStopWithScreenshot = async () => {
+    const percentage = await stopTracking(currentTime);
+    console.log("Activity Percentage:", percentage);
     handleStop();
     if (newEntryName) {
       await takeScreenshot(newEntryName);
@@ -36,6 +45,11 @@ export const TimeTracker: React.FC<TimeTrackerProps> = ({
   const handleNameChangeWithUpdate = (e: React.ChangeEvent<HTMLInputElement>) => {
     handleNameChange(e);
     onTaskNameChange?.(e.target.value);
+  };
+
+  const onHandleStart = () => {
+    handleStart();
+    startTracking();
   };
 
   return (
@@ -76,7 +90,7 @@ export const TimeTracker: React.FC<TimeTrackerProps> = ({
         />
         {!isTimerOn ? (
           <button
-            onClick={handleStart}
+            onClick={onHandleStart}
             disabled={newEntryName.trim() === ""}
             style={{
               backgroundColor: "#4CAF50",
