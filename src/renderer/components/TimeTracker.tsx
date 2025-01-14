@@ -54,105 +54,99 @@ export const TimeTracker: React.FC<TimeTrackerProps> = ({
 
   return (
     <div
-      className="time-tracker"
-      style={{ maxWidth: "600px", margin: "0 auto" }}
+      className="max-w-md mx-auto my-8 p-6 bg-white dark:bg-[#0f1123] border border-[#e6e6e6] dark:border-[#1a1e33] 
+      rounded-2xl shadow-2xl dark:shadow-[0_10px_40px_rgba(30,41,59,0.4)] transition-all duration-300 
+      hover:shadow-xl dark:hover:shadow-[0_15px_50px_rgba(30,41,59,0.5)] font-['Inter'] overflow-hidden"
     >
       <div
-        className="time-display"
-        style={{
-          fontSize: "2em",
-          margin: "20px 0",
-        }}
+        className="text-5xl font-bold text-center text-transparent bg-clip-text 
+        bg-gradient-to-r from-[#6a11cb] to-[#2575fc] dark:from-[#8e2de2] dark:to-[#4a00e0] 
+        mb-6 tracking-tight"
       >
         {currentTime}
       </div>
 
       <div
-        className="controls"
-        style={{
-          display: "flex",
-          gap: "10px",
-          marginBottom: "20px",
-          alignItems: "center",
-        }}
+        className="flex flex-col space-y-4 mb-6"
       >
         <input
           type="text"
           value={newEntryName}
           onChange={handleNameChangeWithUpdate}
-          placeholder="Enter task name"
-          style={{
-            padding: "8px",
-            borderRadius: "4px",
-            border: "1px solid #ccc",
-            flexGrow: 1,
-          }}
+          placeholder="What are you working on?"
+          className="px-4 py-3 border-2 border-[#e0e0e0] dark:border-[#2c3142] 
+          dark:bg-[#1a1e33] dark:text-[#e0e7ff] rounded-xl text-base 
+          transition-all duration-300 ease-in-out outline-none 
+          focus:border-[#6a11cb] focus:ring-4 focus:ring-[#6a11cb]/20 
+          dark:focus:border-[#8e2de2] dark:focus:ring-[#8e2de2]/30 
+          placeholder-gray-400 dark:placeholder-gray-500
+          font-medium"
+          disabled={isTimerOn}
         />
-        {!isTimerOn ? (
-          <button
-            onClick={onHandleStart}
-            disabled={newEntryName.trim() === ""}
-            style={{
-              backgroundColor: "#4CAF50",
-              color: "white",
-              border: "none",
-              padding: "8px 16px",
-              borderRadius: "4px",
-              cursor: "pointer",
-              minWidth: "80px",
-            }}
-          >
-            Start
-          </button>
-        ) : (
-          <button
-            onClick={handleStopWithScreenshot}
-            style={{
-              backgroundColor: "#f44336",
-              color: "white",
-              border: "none",
-              padding: "8px 16px",
-              borderRadius: "4px",
-              cursor: "pointer",
-              minWidth: "80px",
-            }}
-          >
-            Stop
-          </button>
-        )}
+        <div
+          className="flex justify-center space-x-4"
+        >
+          {!isTimerOn ? (
+            <button
+              onClick={onHandleStart}
+              disabled={newEntryName.trim() === ""}
+              className="bg-gradient-to-r from-[#6a11cb] to-[#2575fc] 
+              text-white px-6 py-3 rounded-xl 
+              text-base font-semibold transition-all duration-300 ease-in-out 
+              shadow-lg hover:shadow-xl hover:-translate-y-0.5 
+              disabled:opacity-50 disabled:cursor-not-allowed 
+              transform active:scale-95"
+            >
+              Start Tracking
+            </button>
+          ) : (
+            <button
+              onClick={handleStopWithScreenshot}
+              className="bg-gradient-to-r from-[#ff416c] to-[#ff4b2b] 
+              text-white px-6 py-3 rounded-xl 
+              text-base font-semibold transition-all duration-300 ease-in-out 
+              shadow-lg hover:shadow-xl hover:-translate-y-0.5 
+              transform active:scale-95"
+            >
+              Stop Tracking
+            </button>
+          )}
+        </div>
       </div>
 
       {savedTimes.length > 0 && (
         <div
-          className="saved-times"
-          style={{
-            marginTop: "30px",
-            border: "1px solid #eee",
-            borderRadius: "8px",
-            padding: "16px",
-          }}
+          className="mt-6 bg-[#f9fafb] dark:bg-[#161b2e] rounded-2xl p-5 
+          border border-[#f0f0f0] dark:border-[#1f2937] shadow-md"
         >
-          <h3 style={{ marginTop: 0, marginBottom: "16px" }}>Saved Times</h3>
+          <h3
+            className="mt-0 mb-4 text-[#1f2937] dark:text-[#e0e7ff] text-lg font-bold 
+            border-b-2 border-[#e6e6e6] dark:border-[#2c3142] pb-3 uppercase tracking-wider"
+          >
+            Tracked Tasks
+          </h3>
           <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "8px",
-            }}
+            className="flex flex-col space-y-3"
           >
             {savedTimes.map((entry) => (
               <div
                 key={entry.id}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  padding: "8px",
-                  backgroundColor: "#f5f5f5",
-                  borderRadius: "4px",
-                }}
+                className="flex justify-between items-center p-3 
+                bg-white dark:bg-[#1a1e33] rounded-xl transition-all duration-300 ease-in-out 
+                hover:bg-[#f3f4f6] dark:hover:bg-[#222842] 
+                border border-transparent hover:border-[#6a11cb]/20 
+                dark:hover:border-[#8e2de2]/20 shadow-sm hover:shadow-md"
               >
-                <span>{entry.name}</span>
-                <span style={{ fontFamily: "monospace" }}>
+                <span
+                  className="font-medium text-[#374151] dark:text-[#e0e7ff] flex-1 mr-4 
+                  truncate tracking-tight"
+                >
+                  {entry.name}
+                </span>
+                <span
+                  className="font-['Roboto_Mono'] text-[#6a11cb] dark:text-[#8e2de2] 
+                  font-bold tracking-tighter"
+                >
                   {formatTime(entry.duration)}
                 </span>
               </div>
